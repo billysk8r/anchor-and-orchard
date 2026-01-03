@@ -25,9 +25,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Theme-aware Favicons */}
-        <link rel="icon" href="/logo_light.svg" type="image/svg+xml" media="(prefers-color-scheme: light)" />
-        <link rel="icon" href="/logo_dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)" />
+        {/* Single theme-aware SVG favicon */}
+        <link rel="icon" href="/logo_theme_aware.svg" type="image/svg+xml" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
         {children}

@@ -7,20 +7,12 @@ export default function Home() {
       {/* Simple Navigation */}
       <nav className="flex justify-between items-center p-6 max-w-6xl mx-auto w-full">
         <div className="flex items-center gap-2">
-          {/* Logo swaps based on theme */}
           <Image 
-            src="/logo_light.svg" 
+            src="/logo_theme_aware.svg" 
             alt="Anchor & Orchard Logo" 
             width={32} 
             height={32} 
-            className="dark:hidden"
-          />
-          <Image 
-            src="/logo_dark.svg" 
-            alt="Anchor & Orchard Logo" 
-            width={32} 
-            height={32} 
-            className="hidden dark:block"
+            priority
           />
           <span className="font-bold text-xl tracking-tight">Anchor & Orchard</span>
         </div>
@@ -31,11 +23,15 @@ export default function Home() {
       </nav>
 
       <main className="flex-grow max-w-4xl mx-auto px-6 py-12 md:py-24 text-center">
-        {/* Hero Section */}
+        {/* Hero Section Logo */}
         <div className="mb-8 flex justify-center">
-             {/* Larger Hero Logo */}
-            <Image src="/logo_light.svg" alt="Logo" width={120} height={120} className="dark:hidden" />
-            <Image src="/logo_dark.svg" alt="Logo" width={120} height={120} className="hidden dark:block" />
+            <Image 
+              src="/logo_theme_aware.svg" 
+              alt="Anchor & Orchard Hero Logo" 
+              width={120} 
+              height={120} 
+              priority
+            />
         </div>
         
         <h1 className="text-5xl md:text-7xl font-extrabold mb-6 bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent leading-tight">
@@ -50,7 +46,7 @@ export default function Home() {
           <input 
             type="text" 
             placeholder="Enter Organization Name or EIN..." 
-            className="w-full md:flex-1 p-4 rounded-xl bg-transparent focus:outline-none text-lg"
+            className="w-full md:flex-1 p-4 rounded-xl bg-transparent focus:outline-none text-lg text-slate-900 dark:text-white"
           />
           <button className="w-full md:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all whitespace-nowrap">
             Calculate Yield Gap

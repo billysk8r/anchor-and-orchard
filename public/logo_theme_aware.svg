@@ -7,8 +7,18 @@
 <metadata>
 Created by potrace 1.16, written by Peter Selinger 2001-2019
 </metadata>
-<g transform="translate(0.000000,690.000000) scale(0.100000,-0.100000)"
-fill="#31465c" stroke="none">
+  <style>
+    .logo-color {
+      fill: #31465c;
+    }
+    @media (prefers-color-scheme: dark) {
+      .logo-color {
+        fill: #9eb4cb;
+      }
+    }
+  </style>
+<g class="logo-color" transform="translate(0.000000,690.000000) scale(0.100000,-0.100000)"
+ stroke="none">
 <path d="M2645 6862 c-200 -106 -300 -226 -363 -433 -45 -148 -53 -397 -17
 -539 22 -83 72 -188 134 -282 51 -76 251 -278 331 -334 l45 -32 77 72 76 71
 -116 90 c-298 229 -424 409 -439 625 -7 93 12 174 67 285 39 80 107 181 116
