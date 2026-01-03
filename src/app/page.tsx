@@ -7,13 +7,17 @@ export default function Home() {
       {/* Simple Navigation */}
       <nav className="flex justify-between items-center p-6 max-w-6xl mx-auto w-full">
         <div className="flex items-center gap-2">
-          <Image 
-            src="/logo_theme_aware.svg" 
-            alt="Anchor & Orchard Logo" 
-            width={32} 
-            height={32} 
-            priority
-          />
+          {/* Wrapper with fixed dimensions to prevent layout shift */}
+          <div className="w-[32px] h-[32px] flex-shrink-0">
+            <Image 
+              src="/logo_theme_aware.svg" 
+              alt="Anchor & Orchard Logo" 
+              width={32} 
+              height={32} 
+              priority
+              className="block"
+            />
+          </div>
           <span className="font-bold text-xl tracking-tight">Anchor & Orchard</span>
         </div>
         <div className="space-x-8 hidden md:flex font-medium">
@@ -25,13 +29,17 @@ export default function Home() {
       <main className="flex-grow max-w-4xl mx-auto px-6 py-12 md:py-24 text-center">
         {/* Hero Section Logo */}
         <div className="mb-8 flex justify-center">
-            <Image 
-              src="/logo_theme_aware.svg" 
-              alt="Anchor & Orchard Hero Logo" 
-              width={120} 
-              height={120} 
-              priority
-            />
+            {/* Wrapper with fixed dimensions to prevent hero layout shift */}
+            <div className="w-[120px] h-[120px]">
+              <Image 
+                src="/logo_theme_aware.svg" 
+                alt="Anchor & Orchard Hero Logo" 
+                width={120} 
+                height={120} 
+                priority
+                className="block"
+              />
+            </div>
         </div>
         
         <h1 className="text-5xl md:text-7xl font-extrabold mb-6 bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent leading-tight">
