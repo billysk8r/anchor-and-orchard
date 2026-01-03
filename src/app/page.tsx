@@ -1,52 +1,58 @@
-import Image from "next/image";
+import React from 'react';
 
 export default function Home() {
-	return (
-		<div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-			<main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-				<Image className="dark:invert" src="/next.svg" alt="Next.js logo" width={180} height={38} priority />
-				<ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-					<li className="mb-2 tracking-[-.01em]">
-						Get started by editing{" "}
-						<code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-							src/app/page.tsx
-						</code>
-						.
-					</li>
-					<li className="tracking-[-.01em]">Save and see your changes instantly.</li>
-				</ol>
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Simple Navigation */}
+      <nav className="flex justify-between items-center p-6 max-w-6xl mx-auto w-full">
+        <div className="font-bold text-xl tracking-tight">Anchor & Orchard</div>
+        <div className="space-x-8 hidden md:flex font-medium">
+          <a href="/about" className="hover:text-blue-500 transition">About</a>
+          <a href="/contact" className="hover:text-blue-500 transition">Contact</a>
+        </div>
+      </nav>
 
-				<div className="flex gap-4 items-center flex-col sm:flex-row">
-					<a
-						className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-						href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						Read our docs
-					</a>
-				</div>
-			</main>
-			<footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-				<a
-					className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-					href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					<Image aria-hidden src="/file.svg" alt="File icon" width={16} height={16} />
-					Learn
-				</a>
-				<a
-					className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-					href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					<Image aria-hidden src="/globe.svg" alt="Globe icon" width={16} height={16} />
-					Go to nextjs.org →
-				</a>
-			</footer>
-		</div>
-	);
+      <main className="flex-grow max-w-4xl mx-auto px-6 py-12 md:py-24 text-center">
+        {/* Hero Section */}
+        <h1 className="text-5xl md:text-7xl font-extrabold mb-6 bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent leading-tight">
+          Data-Driven Stewardship.
+        </h1>
+        <p className="text-xl md:text-2xl mb-12 text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto">
+          We scan Form 990 filings to help nonprofits identify underperforming cash management—finding the "hidden yield" to fuel your mission.
+        </p>
+        
+        {/* Search/Calculator Input Area */}
+        <div className="flex flex-col md:flex-row gap-4 justify-center items-center bg-slate-50 dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl">
+          <input 
+            type="text" 
+            placeholder="Enter Organization Name or EIN..." 
+            className="w-full md:flex-1 p-4 rounded-xl bg-transparent focus:outline-none text-lg"
+          />
+          <button className="w-full md:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all whitespace-nowrap">
+            Calculate Yield Gap
+          </button>
+        </div>
+
+        {/* Value Props */}
+        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+          <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
+            <div className="text-blue-500 font-bold mb-2">01. The 10bps Threshold</div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">We flag organizations where investment income divided by net assets falls below 10 basis points.</p>
+          </div>
+          <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
+            <div className="text-blue-500 font-bold mb-2">02. Big Data Analysis</div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Our local engine parses thousands of 990 & 990EZ filings to pinpoint underdeveloped strategies.</p>
+          </div>
+          <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
+            <div className="text-blue-500 font-bold mb-2">03. Mission Growth</div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Maximize your mission by reclaiming lost interest and dividends without increasing donor ask.</p>
+          </div>
+        </div>
+      </main>
+
+      <footer className="p-8 border-t border-slate-200 dark:border-slate-800 text-center text-slate-500 text-sm">
+        © {new Date().getFullYear()} Anchor & Orchard. All rights reserved.
+      </footer>
+    </div>
+  );
 }
