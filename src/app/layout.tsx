@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,13 +24,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <head>
-        {/* Single theme-aware SVG favicon */}
         <link rel="icon" href="/logo_theme_aware.svg" type="image/svg+xml" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300 min-h-screen flex flex-col`}>
+        <Navbar />
+        <div className="flex-grow">
+          {children}
+        </div>
+        <footer className="p-8 border-t border-slate-200 dark:border-slate-800 text-center text-slate-500 text-sm">
+          © {new Date().getFullYear()} Anchor & Orchard.
+        </footer>
       </body>
     </html>
   );
