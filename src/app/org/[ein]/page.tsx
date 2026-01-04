@@ -1,143 +1,136 @@
 import React from 'react';
 import Navbar from '@/components/Navbar';
 
-interface FilingData {
-  tax_prd_yr: number;
-  totassetsend: number;
-  invstmntinc: number | null;
-  othrinvstinc: number | null;
+interface IrsData {
+  cashAssets: number;
+  investmentIncome: number;
+  formType: string;
+  year: string;
+  name: string;
+  error?: string;
 }
 
-interface ProPublicaOrgResponse {
-  organization: {
-    ein: string;
-    name: string;
-    city: string;
-    state: string;
-  };
-  filings_with_data: FilingData[];
-}
-
-async function getTreasuryBenchmark(): Promise<number> {
+async function getTreasuryRate(): Promise<number> {
   try {
-    const currentYear = new Date().getFullYear();
-    const res = await fetch(
-      `https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml?data=daily_treasury_bill_rates&field_tdr_date_value=${currentYear}`,
-      { next: { revalidate: 3600 } }
-    );
+    const res = await fetch(`https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml?data=daily_treasury_bill_rates&field_tdr_date_value=${new Date().getFullYear()}`, { next: { revalidate: 3600 } });
     const xml = await res.text();
-
-    // Regex to find 4-week yield. Treasury returns data ascending by date.
-    const yieldMatches = Array.from(xml.matchAll(/<d:ROUND_B1_YIELD_4WK_2[^>]*>([\d.]+)<\/d:ROUND_B1_YIELD_4WK_2>/g));
-    
-    if (yieldMatches.length > 0) {
-      // Take the most recent sample
-      const latestYield = parseFloat(yieldMatches[yieldMatches.length - 1][1]);
-      return latestYield / 100; 
-    }
-    return 0.035; 
-  } catch (e) {
-    console.error("Treasury fetch failed", e);
-    return 0.035;
-  }
-}
-
-async function getOrgData(ein: string): Promise<ProPublicaOrgResponse> {
-  const res = await fetch(`https://projects.propublica.org/nonprofits/api/v2/organizations/${ein}.json`, {
-    next: { revalidate: 86400 } 
-  });
-  if (!res.ok) throw new Error('Failed to fetch organization');
-  return res.json() as Promise<ProPublicaOrgResponse>;
+    const matches = Array.from(xml.matchAll(/<d:ROUND_B1_YIELD_4WK_2[^>]*>([\d.]+)<\/d:ROUND_B1_YIELD_4WK_2>/g));
+    return matches.length > 0 ? parseFloat(matches[matches.length - 1][1]) / 100 : 0.045;
+  } catch { return 0.045; }
 }
 
 export default async function OrgPage({ params }: { params: Promise<{ ein: string }> }) {
-  const resolvedParams = await params;
+  const { ein } = await params;
+  const host = process.env.VERCEL_URL || 'localhost:3000';
+  const protocol = host.includes('localhost') ? 'http' : 'https';
   
-  const [data, benchmarkRate] = await Promise.all([
-    getOrgData(resolvedParams.ein),
-    getTreasuryBenchmark()
+  const [benchmarkRate, irsRes] = await Promise.all([
+    getTreasuryRate(),
+    fetch(`${protocol}://${host}/api/irs-fetch?ein=${ein}`, { cache: 'no-store' })
   ]);
 
-  const org = data.organization;
-  const latestFiling = data.filings_with_data?.find(f => f.totassetsend > 0) || data.filings_with_data?.[0];
+  const irsData = (await irsRes.json()) as IrsData;
 
-  const assets = latestFiling?.totassetsend || 0;
-  const currentYield = (latestFiling?.invstmntinc || 0) + (latestFiling?.othrinvstinc || 0);
-  const currentBps = assets > 0 ? (currentYield / assets) * 10000 : 0;
+  if (irsData.error) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-slate-950">
+        <Navbar />
+        <main className="max-w-4xl mx-auto p-20 text-center">
+          <h2 className="text-2xl font-bold mb-2">Filing Unavailable</h2>
+          <p className="text-slate-500 max-w-md mx-auto">{irsData.error}</p>
+        </main>
+      </div>
+    );
+  }
+
+  const { cashAssets, investmentIncome, formType, year, name } = irsData;
+  const currentBps = cashAssets > 0 ? (investmentIncome / cashAssets) * 10000 : 0;
+  const yieldGap = (cashAssets * benchmarkRate) - investmentIncome;
   
-  const potentialIncome = assets * benchmarkRate;
-  const yieldGap = potentialIncome - currentYield;
+  let impactText = "";
+  if (yieldGap >= 1000) {
+    impactText = `Equivalent to approximately ${Math.floor(yieldGap / 1000)} new $1,000 grants or programs per year.`;
+  } else if (yieldGap > 0) {
+    impactText = `Equivalent to covering approximately $${Math.floor(yieldGap / 12)} in monthly utility or administrative overhead costs.`;
+  }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
       <Navbar />
-      <main className="max-w-4xl mx-auto px-6 py-12">
-        <div className="mb-10 text-left border-b border-slate-200 dark:border-slate-800 pb-8">
-          <h1 className="text-4xl font-extrabold mb-2 leading-tight">{org.name}</h1>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-500 font-medium text-lg">
-            <span>{org.city}, {org.state}</span>
-            <span className="hidden md:inline text-slate-300">•</span>
-            <span>EIN: {org.ein}</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Total Assets ({latestFiling?.tax_prd_yr})</div>
-            <div className="text-2xl font-bold">${assets.toLocaleString()}</div>
-          </div>
-          
-          <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Current Income</div>
-            <div className="text-2xl font-bold">${currentYield.toLocaleString()}</div>
-          </div>
-          
-          <div className={`p-6 rounded-2xl border shadow-sm ${
-            currentBps < 10 
-              ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' 
-              : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800'
-          }`}>
-            <div className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-2">Current Yield</div>
-            <div className={`text-3xl font-bold ${currentBps < 10 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-900 dark:text-white'}`}>
-              {currentBps.toFixed(2)} bps
+      <main className="max-w-6xl mx-auto px-6 py-16">
+        <div className="mb-12 border-b border-slate-200 dark:border-slate-800 pb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white mb-4 leading-[1.1] text-balance">
+              {name}
+            </h1>
+            <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-slate-400 tracking-[0.2em] uppercase">
+              <span>EIN {ein}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+              <span>{formType}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+              <span>FY {year}</span>
             </div>
           </div>
+          <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl text-right min-w-[200px]">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Target Yield (T-Bill)</p>
+            <p className="text-3xl font-black text-blue-600">{(benchmarkRate * 100).toFixed(2)}%</p>
+          </div>
         </div>
 
-        <div className="text-left">
-           <h2 className="text-2xl font-bold mb-6">Stewardship Analysis</h2>
-           
-           {assets === 0 ? (
-             <div className="p-6 bg-slate-100 dark:bg-slate-800 rounded-2xl italic text-slate-500">
-               No financial data available for this organization to calculate yield.
-             </div>
-           ) : currentBps < 10 ? (
-             <div className="p-8 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-3xl shadow-sm">
-               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                 <div className="max-w-xl">
-                    <h3 className="text-2xl font-bold text-emerald-900 dark:text-emerald-400 mb-3">Yield Opportunity Identified</h3>
-                    <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed text-lg">
-                      This organization is performing below the <span className="font-bold underline">10 basis point</span> benchmark. 
-                      By shifting assets to a benchmark rate of <span className="font-bold">{(benchmarkRate * 100).toFixed(2)}%</span> (current 4-week Treasury yield), you could unlock significant extra funding.
-                    </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <div className="p-10 rounded-[2.5rem] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Total Liquid Assets</p>
+            <p className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white">${cashAssets.toLocaleString()}</p>
+            <p className="text-[10px] text-slate-400 mt-2 italic uppercase">Includes Savings & Cash</p>
+          </div>
+          
+          <div className="p-10 rounded-[2.5rem] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Current Income</p>
+            <p className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white">${investmentIncome.toLocaleString()}</p>
+          </div>
+
+          <div className={`p-10 rounded-[2.5rem] text-white shadow-2xl ${currentBps < 10 ? 'bg-gradient-to-br from-blue-600 to-blue-800' : 'bg-slate-900'}`}>
+            <p className="text-xs font-bold opacity-70 uppercase tracking-widest mb-4">Performance</p>
+            <p className="text-4xl font-black tracking-tighter">{currentBps.toFixed(2)} bps</p>
+          </div>
+        </div>
+
+        {currentBps < 10 && yieldGap > 50 ? (
+          <div className="relative overflow-hidden bg-emerald-600 text-white p-12 md:p-16 rounded-[3.5rem] shadow-2xl">
+             <div className="relative z-10">
+               <div className="flex items-center gap-3 mb-6">
+                 <span className="h-3 w-3 rounded-full bg-emerald-300 animate-pulse"></span>
+                 <h2 className="text-sm font-bold uppercase tracking-[0.3em] text-emerald-100">Actionable Insight</h2>
+               </div>
+               <h3 className="text-3xl md:text-4xl font-black mb-6 max-w-2xl leading-tight text-balance">
+                 Your cash is currently under-stewarded.
+               </h3>
+               <p className="text-emerald-50 text-xl mb-12 max-w-2xl leading-relaxed opacity-90">
+                 By shifting liquid assets to a strategy matching the {(benchmarkRate * 100).toFixed(2)}% treasury benchmark, this organization could fund more of its mission.
+               </p>
+               
+               <div className="flex flex-col md:flex-row items-start md:items-center gap-10">
+                 <div className="bg-white text-emerald-700 px-12 py-8 rounded-[2rem] shadow-inner">
+                   <p className="text-[10px] font-black uppercase tracking-widest mb-2 opacity-60">Potential Annual Lift</p>
+                   <p className="text-5xl font-black tracking-tighter">
+                     +${Math.floor(yieldGap).toLocaleString()}
+                   </p>
                  </div>
-                 <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-emerald-200 dark:border-emerald-800 shadow-sm text-center min-w-[200px]">
-                    <div className="text-xs font-bold uppercase text-slate-500 mb-1">Potential Annual Impact</div>
-                    <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
-                      +${Math.floor(yieldGap).toLocaleString()}
+                 {impactText && (
+                    <div className="max-w-[250px] text-emerald-100 text-sm leading-relaxed border-l border-emerald-500/50 pl-8 italic">
+                      {impactText}
                     </div>
-                 </div>
+                 )}
                </div>
              </div>
-           ) : (
-             <div className="p-8 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
-               <p className="text-lg leading-relaxed text-slate-600 dark:text-slate-400">
-                 This organization is maintaining a healthy yield above the 10bps benchmark. 
-                 Consistent stewardship is in place for these liquid assets.
-               </p>
-             </div>
-           )}
-        </div>
+             <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-emerald-500 rounded-full opacity-20 blur-[100px]"></div>
+          </div>
+        ) : (
+          <div className="p-20 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[3.5rem] text-center">
+            <p className="text-2xl font-bold text-slate-700 dark:text-slate-300 mb-2">Efficient Stewardship</p>
+            <p className="text-slate-500 max-w-sm mx-auto">This organization is effectively capturing yield on its liquid assets above the 10 basis point threshold.</p>
+          </div>
+        )}
       </main>
     </div>
   );
