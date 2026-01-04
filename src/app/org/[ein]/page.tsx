@@ -1,14 +1,6 @@
 import React from 'react';
 import Navbar from '@/components/Navbar';
-
-interface IrsData {
-  cashAssets: number;
-  investmentIncome: number;
-  formType: string;
-  year: string;
-  name: string;
-  error?: string;
-}
+import { getIrsData } from '@/lib/irs';
 
 async function getTreasuryRate(): Promise<number> {
   try {
@@ -21,22 +13,19 @@ async function getTreasuryRate(): Promise<number> {
 
 export default async function OrgPage({ params }: { params: Promise<{ ein: string }> }) {
   const { ein } = await params;
-  const host = process.env.VERCEL_URL || 'localhost:3000';
-  const protocol = host.includes('localhost') ? 'http' : 'https';
   
-  const [benchmarkRate, irsRes] = await Promise.all([
+  // Call local function directly - No network request to self!
+  const [benchmarkRate, irsData] = await Promise.all([
     getTreasuryRate(),
-    fetch(`${protocol}://${host}/api/irs-fetch?ein=${ein}`, { cache: 'no-store' })
+    getIrsData(ein)
   ]);
-
-  const irsData = (await irsRes.json()) as IrsData;
 
   if (irsData.error) {
     return (
       <div className="min-h-screen bg-white dark:bg-slate-950">
         <Navbar />
         <main className="max-w-4xl mx-auto p-20 text-center">
-          <h2 className="text-2xl font-bold mb-2">Filing Unavailable</h2>
+          <h2 className="text-2xl font-bold mb-2 text-slate-900 dark:text-white">Filing Unavailable</h2>
           <p className="text-slate-500 max-w-md mx-auto">{irsData.error}</p>
         </main>
       </div>
@@ -58,7 +47,7 @@ export default async function OrgPage({ params }: { params: Promise<{ ein: strin
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
       <Navbar />
       <main className="max-w-6xl mx-auto px-6 py-16">
-        <div className="mb-12 border-b border-slate-200 dark:border-slate-800 pb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div className="mb-12 border-b border-slate-200 dark:border-slate-800 pb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 text-left">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white mb-4 leading-[1.1] text-balance">
               {name}
@@ -77,7 +66,7 @@ export default async function OrgPage({ params }: { params: Promise<{ ein: strin
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 text-left">
           <div className="p-10 rounded-[2.5rem] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Total Liquid Assets</p>
             <p className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white">${cashAssets.toLocaleString()}</p>
@@ -96,7 +85,7 @@ export default async function OrgPage({ params }: { params: Promise<{ ein: strin
         </div>
 
         {currentBps < 10 && yieldGap > 50 ? (
-          <div className="relative overflow-hidden bg-emerald-600 text-white p-12 md:p-16 rounded-[3.5rem] shadow-2xl">
+          <div className="relative overflow-hidden bg-emerald-600 text-white p-12 md:p-16 rounded-[3.5rem] shadow-2xl text-left">
              <div className="relative z-10">
                <div className="flex items-center gap-3 mb-6">
                  <span className="h-3 w-3 rounded-full bg-emerald-300 animate-pulse"></span>
