@@ -27,7 +27,7 @@ export default async function OrgPage({ params }: { params: Promise<{ ein: strin
   const currentBps = cashAssets > 0 ? (investmentIncome / cashAssets) * 10000 : 0;
   const yieldGap = (cashAssets * benchmarkRate) - investmentIncome;
   
-  let impactText = yieldGap >= 1000 
+  const impactText = yieldGap >= 1000 
     ? `Equivalent to approximately ${Math.floor(yieldGap / 1000)} new $1,000 grants or programs per year.`
     : yieldGap > 0 
     ? `Equivalent to covering approximately $${Math.floor(yieldGap / 12)} in monthly utility or administrative overhead costs.`
