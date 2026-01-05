@@ -53,11 +53,27 @@ export async function getIrsData(ein: string): Promise<IrsData> {
     let investmentIncome = 0;
     let formType = "990";
 
-    if (xmlText.includes('IRS990EZ')) {
+    if (xmlText.includes('IRS990PF')) {
+      formType = "990-PF";
+      // Private Foundation Income
+      investmentIncome = parseFloat(xmlText.match(/<InterestOnSavNetInvstIncmAmt>([\d.-]+)</)?.[1] || "0");
+      
+      // Private Foundation Assets: Cash (EOY with BOY fallback) + Savings (EOY)
+      const cashEOY = xmlText.match(/<CashEOYAmt>([\d.-]+)</)?.[1];
+      const cashBOY = xmlText.match(/<CashBOYAmt>([\d.-]+)</)?.[1];
+      const savingsEOY = xmlText.match(/<SavAndTempCashInvstEOYAmt>([\d.-]+)</)?.[1];
+      
+      const finalCash = parseFloat(cashEOY || cashBOY || "0");
+      const finalSavings = parseFloat(savingsEOY || "0");
+      cashAssets = finalCash + finalSavings;
+
+    } else if (xmlText.includes('IRS990EZ')) {
       formType = "990EZ";
       investmentIncome = parseFloat(xmlText.match(/<InvestmentIncomeAmt>([\d.-]+)</)?.[1] || "0");
       cashAssets = parseFloat(xmlText.match(/<CashSavingsAndInvestmentsGrp>[\s\S]*?<EOYAmt>([\d.-]+)</)?.[1] || "0");
+      
     } else {
+      // Standard 990
       investmentIncome = parseFloat(xmlText.match(/<CYInvestmentIncomeAmt>([\d.-]+)</)?.[1] || "0");
       const savingsAmt = parseFloat(xmlText.match(/<SavingsAndTempCashInvstGrp>[\s\S]*?<EOYAmt>([\d.-]+)</)?.[1] || "0");
       const nonInterestCashAmt = parseFloat(xmlText.match(/<CashNonInterestBearingGrp>[\s\S]*?<EOYAmt>([\d.-]+)</)?.[1] || "0");
